@@ -8,6 +8,7 @@ export interface Product {
   category: Category;
   image: string;
   prices: Record<Supermarket, number>;
+  promotion?: ProductPromotion;
   updatedAt: string;
   badge?: 'price dropped' | 'special deal';
   trendLabel?: string;
@@ -15,6 +16,17 @@ export interface Product {
   verificationLabel?: string;
   monthlyLow?: boolean;
   priceChangePercent?: number;
+}
+
+export interface ProductPromotion {
+  store: Supermarket;
+  originalPrice: number;
+  discountedPrice: number;
+  discountPercent: number;
+  promotionLabel: string;
+  isHalfPrice: boolean;
+  savingAmount?: number;
+  endsIn?: string;
 }
 
 export interface BasketItem {

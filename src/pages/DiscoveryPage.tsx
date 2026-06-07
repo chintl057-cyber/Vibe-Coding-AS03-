@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowUpDown } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
+import { HeroBanner } from '../components/HeroBanner';
 import { useBasket } from '../contexts/BasketContext';
 import { useDiscovery } from '../contexts/DiscoveryContext';
 import { suburbs } from '../data/products';
@@ -23,6 +24,7 @@ export function DiscoveryPage() {
     categories,
     filteredProducts,
   } = useDiscovery();
+  const orderedCategories = ['dairy', 'fruit', 'vegetables', 'pantry', 'snacks', 'drinks'] as const;
 
   const [itemsPerPage, setItemsPerPage] = useState(9);
   const [page, setPage] = useState(1);
@@ -41,22 +43,9 @@ export function DiscoveryPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-white via-emerald-50 to-white">
-      {/* Hero Section */}
-      <section className="border-b border-brand-200 bg-gradient-to-br from-brand-600 via-brand-500 to-emerald-500 px-4 py-8 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-widest text-emerald-100">TODAY'S BEST DEALS</p>
-              <h1 className="mt-2 text-4xl font-extrabold">Save more on groceries</h1>
-              <p className="mt-1 text-emerald-50">Compare prices across supermarkets and optimize your basket.</p>
-            </div>
-            <div className="hidden text-6xl opacity-20 sm:block">🥬</div>
-          </div>
-        </div>
-      </section>
-
       {/* Main Content */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <HeroBanner />
         <div className="grid gap-8 lg:grid-cols-4">
           {/* Left Sidebar - Filters */}
           <aside className="rounded-2xl border border-brand-100 bg-white p-6 shadow-sm lg:sticky lg:top-24 lg:h-fit">
@@ -90,9 +79,19 @@ export function DiscoveryPage() {
                       : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  All Categories
+                  All
                 </button>
-                {categories.map((cat) => (
+                <button
+                  onClick={() => setCategory('half-price')}
+                  className={`flex w-full rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                    category === 'half-price'
+                      ? 'bg-brand-100 text-brand-700'
+                      : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  🔥 Half Price
+                </button>
+                {orderedCategories.filter((cat) => categories.includes(cat)).map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setCategory(cat)}

@@ -14,6 +14,12 @@ export const STORES: Supermarket[] = ['Coles', 'Woolworths', 'Aldi', 'IGA'];
 
 export const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 
+export const getPromotionSaving = (product: Product) => {
+  if (!product.promotion) return 0;
+  if (typeof product.promotion.savingAmount === 'number') return product.promotion.savingAmount;
+  return Math.max(0, product.promotion.originalPrice - product.promotion.discountedPrice);
+};
+
 export const getCheapestStoreForProduct = (product: Product) => {
   return STORES.reduce(
     (best, store) => (product.prices[store] < best.price ? { store, price: product.prices[store] } : best),

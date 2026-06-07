@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react';
 import { Product } from '../types';
-import { formatCurrency, getCheapestStoreForProduct, STORES } from '../utils/basket';
+import { formatCurrency, getCheapestStoreForProduct, getPromotionSaving, STORES } from '../utils/basket';
 import { Button } from './ui/Button';
 
 interface Props {
@@ -16,6 +16,7 @@ export function ProductCard({ product, expanded, onToggleCompare, quantity, onIn
   const best = getCheapestStoreForProduct(product);
   const maxPrice = Math.max(...STORES.map((store) => product.prices[store]));
   const savingsValue = Math.max(0, maxPrice - best.price);
+  const promo = product.promotion;
   const secondaryIndicator = product.trendLabel ?? product.verificationLabel ?? 'Community verified pricing';
   const categoryColorMap: Record<Product['category'], string> = {
     dairy: 'from-sky-100 to-blue-50 text-sky-700',
@@ -38,6 +39,11 @@ export function ProductCard({ product, expanded, onToggleCompare, quantity, onIn
           <p className="mt-1 text-sm font-semibold text-brand-700">
             {formatCurrency(best.price)} at {best.store}
           </p>
+          {promo?.isHalfPrice && (
+            <p className="mt-1 text-xs font-semibold text-rose-600">
+              {promo.promotionLabel} at {promo.store} • Save {formatCurrency(getPromotionSaving(product))}
+            </p>
+          )}
           <p className="text-xs text-slate-400">Verified {product.updatedAt.replace('updated ', '')}</p>
         </div>
       </div>
@@ -48,10 +54,23 @@ export function ProductCard({ product, expanded, onToggleCompare, quantity, onIn
             Save {formatCurrency(savingsValue)}
           </p>
         )}
+        {promo?.isHalfPrice && (
+          <p className="inline-block rounded-full bg-rose-100 px-2 py-1 text-[11px] font-bold uppercase text-rose-700 shadow-sm">
+            50% OFF
+          </p>
+        )}
         <p className="inline-block rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">
           {secondaryIndicator}
         </p>
       </div>
+
+      {promo?.isHalfPrice && (
+        <div className="mb-3 rounded-2xl bg-rose-50 px-3 py-2 text-xs text-rose-700 ring-1 ring-rose-100">
+          <span className="mr-2 line-through text-slate-500">{formatCurrency(promo.originalPrice)}</span>
+          <span className="font-bold">{formatCurrency(promo.discountedPrice)}</span>
+          <span className="ml-2 text-slate-500">{promo.endsIn ?? 'Promotion-based estimates only'}</span>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Button variant="secondary" className="flex-1" onClick={onToggleCompare}>
