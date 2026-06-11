@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
 // Helper to convert snake_case to camelCase
 const toCamelCase = (obj: any): any => {
@@ -42,8 +42,6 @@ client.interceptors.response.use(
   (response) => {
     // Convert snake_case to camelCase
     const converted = toCamelCase(response.data);
-    console.log('API Response raw:', response.data);
-    console.log('API Response converted:', converted);
     response.data = converted;
     return response;
   },

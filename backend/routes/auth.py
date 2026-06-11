@@ -8,12 +8,10 @@ from dependencies.auth import get_current_user
 from models import User
 import requests
 from typing import Optional, Any
-import sys
+import logging
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-
-print("AUTH ROUTES LOADED", file=sys.stderr)
-print("AUTH ROUTES LOADED")
+logger = logging.getLogger(__name__)
 
 
 class LoginRequest(BaseModel):
@@ -38,6 +36,7 @@ class AuthResponse(BaseModel):
     user_id: str
     email: str
 
+# Functions:
 
 def _extract_supabase_user(data: dict[str, Any]) -> dict[str, Any]:
     user = data.get("user") or data
@@ -66,11 +65,11 @@ def _upsert_user(db: Session, user_id: str, email: str, name: Optional[str] = No
     db.refresh(user)
     return user
 
+# API Endpoints:
 
 @router.post("/register", response_model=AuthResponse)
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
-    print("REGISTER REQUEST RECEIVED")
-    print(f"   Email: {request.email}")
+    logger.info("Register request received for %s", request.email)
     try:
         # Validate settings
         if not settings.supabase_url or not settings.supabase_key:
@@ -91,8 +90,7 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
             },
         )
 
-        print(f"Supabase Register - STATUS: {response.status_code}")
-        print(f"Supabase Register - BODY: {response.text}")
+        logger.info("Supabase register status: %s", response.status_code)
 
         if response.status_code not in (200, 201):
             try:
@@ -124,7 +122,7 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         error_msg = str(e) if str(e) else type(e).__name__
-        print(f"Registration error: {error_msg}")
+        logger.exception("Registration error: %s", error_msg)
         raise HTTPException(status_code=500, detail=f"Registration failed: {error_msg}")
 
 
@@ -143,8 +141,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
             headers={"apikey": settings.supabase_key},
         )
 
-        print(f"Supabase Login - STATUS: {response.status_code}")
-        print(f"Supabase Login - BODY: {response.text}")
+        logger.info("Supabase login status: %s", response.status_code)
 
         if response.status_code != 200:
             raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -173,7 +170,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         error_msg = str(e) if str(e) else type(e).__name__
-        print(f"Login error: {error_msg}")
+        logger.exception("Login error: %s", error_msg)
         raise HTTPException(status_code=500, detail=f"Login failed: {error_msg}")
 
 
@@ -203,7 +200,7 @@ def change_password(request: ChangePasswordRequest):
             },
         )
 
-        print(f"Supabase Change Password - STATUS: {response.status_code}")
+        logger.info("Supabase change password status: %s", response.status_code)
 
         if response.status_code not in [200, 204]:
             raise HTTPException(status_code=400, detail="Failed to change password")
@@ -213,5 +210,5 @@ def change_password(request: ChangePasswordRequest):
         raise
     except Exception as e:
         error_msg = str(e) if str(e) else type(e).__name__
-        print(f"Change password error: {error_msg}")
+        logger.exception("Change password error: %s", error_msg)
         raise HTTPException(status_code=500, detail=f"Change password failed: {error_msg}")

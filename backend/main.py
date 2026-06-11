@@ -2,10 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from database import Base, engine
-from routes import products, basket, auth, debug
+from routes import products, basket, auth
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+if settings.environment == "development":
+    # Create local development tables automatically. Production deployments should
+    # use managed database migrations/SQL instead of doing this on every cold start.
+    Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Vibe Coding Backend",
@@ -26,7 +28,11 @@ app.add_middleware(
 app.include_router(products.router)
 app.include_router(basket.router)
 app.include_router(auth.router)
-app.include_router(debug.router)
+
+if settings.environment == "development":
+    from routes import debug
+
+    app.include_router(debug.router)
 
 @app.get("/health")
 def health_check():
