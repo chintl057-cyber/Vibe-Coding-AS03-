@@ -2,6 +2,22 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// Helper to convert snake_case to camelCase
+const toCamelCase = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(toCamelCase);
+  }
+  if (obj !== null && typeof obj === 'object') {
+    const result: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      result[camelKey] = toCamelCase(value);
+    }
+    return result;
+  }
+  return obj;
+};
+
 const client = axios.create({
   baseURL: API_URL,
   headers: {
@@ -21,9 +37,16 @@ client.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
+// Response interceptor for error handling and snake_case to camelCase conversion
 client.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Convert snake_case to camelCase
+    const converted = toCamelCase(response.data);
+    console.log('API Response raw:', response.data);
+    console.log('API Response converted:', converted);
+    response.data = converted;
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       // Clear auth and redirect to login
@@ -31,6 +54,7 @@ client.interceptors.response.use(
       localStorage.removeItem('user_id');
       window.location.href = '/login';
     }
+    console.error('API Error:', error);
     return Promise.reject(error);
   }
 );

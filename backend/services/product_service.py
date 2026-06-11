@@ -3,6 +3,7 @@ from sqlalchemy import or_
 from models import Product, ProductPrice, Promotion, Supermarket
 from schemas.product import ProductResponseSchema, PromotionSchema
 from typing import List, Dict, Optional
+import re
 
 class ProductService:
     @staticmethod
@@ -51,7 +52,7 @@ class ProductService:
             Supermarket, ProductPrice.supermarket_id == Supermarket.id
         ).filter(ProductPrice.product_id == product.id).all()
         
-        prices = {name: pp.ProductPrice.price for pp, name in prices_data}
+        prices = {name: pp.price for pp, name in prices_data}
         
         # Get promotion if exists
         promotion_data = db.query(Promotion).filter(
@@ -77,7 +78,7 @@ class ProductService:
         return ProductResponseSchema(
             id=product.id,
             name=product.name,
-            category=product.category,
+            category=re.sub(r'[^\w\s]', '', product.category).strip(),
             image=product.image,
             description=product.description,
             prices=prices,

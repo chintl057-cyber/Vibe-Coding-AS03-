@@ -42,12 +42,17 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
     const fetchProducts = async () => {
       try {
         setLoading(true);
+        console.log('Starting to fetch products...');
         const data = await productsApi.getAll(0, 1000);
-        setProducts(data);
+        console.log('Products fetched:', data);
+        console.log('Products count:', data?.length);
+        setProducts(data || []);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch products');
+        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch products';
         console.error('Error fetching products:', err);
+        console.error('Error details:', errorMsg);
+        setError(errorMsg);
       } finally {
         setLoading(false);
       }

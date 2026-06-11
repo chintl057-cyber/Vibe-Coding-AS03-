@@ -13,7 +13,13 @@ def get_products(
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    return ProductService.get_all_products(db, skip=skip, limit=limit)
+    try:
+        return ProductService.get_all_products(db, skip=skip, limit=limit)
+    except Exception as e:
+        print(f"❌ Products error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 @router.get("/search", response_model=List[ProductResponseSchema])
 def search_products(
@@ -23,7 +29,13 @@ def search_products(
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    return ProductService.search_products(db, query=q, category=category, skip=skip, limit=limit)
+    try:
+        return ProductService.search_products(db, query=q, category=category, skip=skip, limit=limit)
+    except Exception as e:
+        print(f"❌ Search error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 @router.get("/{product_id}", response_model=ProductResponseSchema)
 def get_product(product_id: str, db: Session = Depends(get_db)):
