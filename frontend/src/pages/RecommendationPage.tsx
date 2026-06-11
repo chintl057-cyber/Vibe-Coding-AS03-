@@ -1,33 +1,46 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
-import { formatCurrency, getBasketRecommendationAnalysis } from '../utils/basket';
+import { formatCurrency } from '../utils/basket';
 import { Button } from '../components/ui/Button';
 import { useBasket } from '../contexts/BasketContext';
 import { useDiscovery } from '../contexts/DiscoveryContext';
-import { productsApi } from '../api/products';
-import type { Product } from '../types';
+import { basketApi } from '../api/basket';
+import type { BasketRecommendationAnalysis } from '../types';
 
 export function RecommendationPage() {
   const navigate = useNavigate();
   const { basket, clearBasket } = useBasket();
   const { setSearch, setCategory, setExpandedId } = useDiscovery();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [analysis, setAnalysis] = useState<BasketRecommendationAnalysis | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadAnalysis = async () => {
+      if (basket.length === 0) {
+        setAnalysis(null);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const data = await productsApi.getAll(0, 1000);
-        setProducts(data);
+        setLoading(true);
+        const data = await basketApi.analyze(basket);
+        setAnalysis(data);
+        setError(null);
       } catch (err) {
-        console.error('Failed to load products:', err);
+        const message = err instanceof Error ? err.message : 'Failed to analyze basket';
+        console.error('Failed to analyze basket:', err);
+        setError(message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadProducts();
-  }, []);
+    loadAnalysis();
+  }, [basket]);
 
-  const analysis = getBasketRecommendationAnalysis(basket, products);
   const itemCount = basket.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleRestart = () => {
@@ -37,6 +50,35 @@ export function RecommendationPage() {
     setExpandedId(undefined);
     navigate('/discovery');
   };
+
+  if (loading) {
+    return (
+      <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-6">
+        <div className="rounded-3xl bg-white p-6 text-center shadow-soft ring-1 ring-slate-100">
+          <p className="text-lg font-semibold text-slate-900">Analyzing your basket...</p>
+          <p className="mt-1 text-sm text-slate-600">Fetching the latest recommendation from the database</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !analysis) {
+    return (
+      <main className="mx-auto min-h-screen w-full max-w-2xl space-y-4 px-4 py-6">
+        <div className="rounded-3xl bg-red-50 p-6 text-center ring-1 ring-red-100">
+          <p className="text-lg font-semibold text-red-900">
+            {error ? 'Could not analyze basket' : 'Your basket is empty'}
+          </p>
+          <p className="mt-1 text-sm text-red-700">
+            {error || 'Add products before requesting a recommendation.'}
+          </p>
+        </div>
+        <Button className="w-full" onClick={() => navigate('/basket')}>
+          Back to basket
+        </Button>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-2xl space-y-4 px-4 py-6 soft-enter">

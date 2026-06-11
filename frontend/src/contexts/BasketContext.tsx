@@ -48,6 +48,11 @@ export function BasketProvider({ children }: { children: ReactNode }) {
         setBasket(response.items);
       }
     } catch (err) {
+      if ((err as any)?.response?.status === 404) {
+        setBasket([]);
+        return;
+      }
+
       console.error('Failed to load basket:', err);
       throw err;
     }

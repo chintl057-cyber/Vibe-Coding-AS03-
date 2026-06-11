@@ -24,7 +24,7 @@ export function LoginPage() {
       setIsLoading(true);
       setError('');
       const response = await authApi.login(email, password);
-      authApi.storeToken(response.access_token, response.user_id);
+      authApi.storeToken(response.accessToken, response.userId);
       navigate('/discovery');
     } catch (err) {
       const errorMessage = (err as any)?.response?.data?.detail || (err as any)?.message || 'Login failed. Please try again.';

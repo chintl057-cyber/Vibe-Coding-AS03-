@@ -1,9 +1,30 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Button } from '../ui/Button';
 import { authApi } from '../../api/auth';
+import type { CurrentUser } from '../../api/auth';
 
 export function Header() {
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    authApi.me()
+      .then((user) => {
+        if (mounted) {
+          setCurrentUser(user);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load current user:', error);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleLogout = () => {
     authApi.logout();
@@ -18,6 +39,11 @@ export function Header() {
         </Link>
 
         <nav className="flex items-center gap-6 md:gap-8">
+          {currentUser?.email && (
+            <span className="hidden max-w-48 truncate text-sm font-medium text-slate-600 sm:inline">
+              {currentUser.email}
+            </span>
+          )}
           <Link to="/basket" className="text-sm font-semibold text-brand-600 transition hover:text-brand-700">
             Basket
           </Link>

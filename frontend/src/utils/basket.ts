@@ -12,7 +12,10 @@ import {
 
 export const STORES: Supermarket[] = ['Coles', 'Woolworths', 'Aldi', 'IGA'];
 
-export const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+export const formatCurrency = (value: number) => {
+  if (!Number.isFinite(value)) return 'Unavailable';
+  return `$${value.toFixed(2)}`;
+};
 
 export const getPromotionSaving = (product: Product) => {
   if (!product.promotion) return 0;
@@ -22,8 +25,11 @@ export const getPromotionSaving = (product: Product) => {
 
 export const getCheapestStoreForProduct = (product: Product) => {
   return STORES.reduce(
-    (best, store) => (product.prices[store] < best.price ? { store, price: product.prices[store] } : best),
-    { store: 'Coles' as Supermarket, price: product.prices.Coles },
+    (best, store) => {
+      const price = product.prices[store];
+      return Number.isFinite(price) && price < best.price ? { store, price } : best;
+    },
+    { store: 'Coles' as Supermarket, price: Number.POSITIVE_INFINITY },
   );
 };
 
@@ -32,7 +38,9 @@ export const getBasketTotalsByStore = (basket: BasketItem[], products: Product[]
     const total = basket.reduce((sum, item) => {
       const product = products.find((p) => p.id === item.productId);
       if (!product) return sum;
-      return sum + product.prices[store] * item.quantity;
+      const price = product.prices[store];
+      if (!Number.isFinite(price)) return sum;
+      return sum + price * item.quantity;
     }, 0);
 
     return { store, total };

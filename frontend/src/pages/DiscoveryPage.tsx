@@ -23,6 +23,8 @@ export function DiscoveryPage() {
     setSortBy,
     categories,
     filteredProducts,
+    loading,
+    error,
   } = useDiscovery();
   const orderedCategories = ['dairy', 'fruit', 'vegetables', 'pantry', 'snacks', 'drinks'] as const;
 
@@ -194,7 +196,17 @@ export function DiscoveryPage() {
             </div>
 
             {/* Products Grid */}
-            {filteredProducts.length > 0 ? (
+            {loading ? (
+              <div className="rounded-2xl border border-brand-100 bg-white py-16 text-center shadow-sm">
+                <p className="text-lg font-semibold text-slate-900">Loading products...</p>
+                <p className="mt-1 text-slate-600">Fetching the latest items from the database</p>
+              </div>
+            ) : error ? (
+              <div className="rounded-2xl border border-red-100 bg-red-50 py-16 text-center">
+                <p className="text-lg font-semibold text-red-900">Could not load products</p>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-2 pb-28">
                 {visibleProducts.map((product) => (
                   <ProductCard

@@ -54,7 +54,12 @@ client.interceptors.response.use(
       localStorage.removeItem('user_id');
       window.location.href = '/login';
     }
-    console.error('API Error:', error);
+    const isEmptySavedBasket =
+      error.response?.status === 404 && error.config?.url?.startsWith('/api/basket');
+
+    if (!isEmptySavedBasket) {
+      console.error('API Error:', error);
+    }
     return Promise.reject(error);
   }
 );

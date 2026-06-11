@@ -1,10 +1,15 @@
 import client from './client';
 
 export interface AuthResponse {
-  access_token: string;
-  token_type: string;
-  user_id: string;
+  accessToken: string;
+  tokenType: string;
+  userId: string;
   email: string;
+}
+
+export interface CurrentUser {
+  userId: string;
+  email?: string;
 }
 
 export const authApi = {
@@ -25,7 +30,7 @@ export const authApi = {
     return response.data;
   },
 
-  me: async () => {
+  me: async (): Promise<CurrentUser> => {
     const response = await client.get('/api/auth/me');
     return response.data;
   },

@@ -28,7 +28,7 @@ export function RegisterPage() {
       setIsLoading(true);
       setError('');
       const response = await authApi.register(email, password, fullName);
-      authApi.storeToken(response.access_token, response.user_id);
+      authApi.storeToken(response.accessToken, response.userId);
       navigate('/discovery');
     } catch (err) {
       const errorMessage = (err as any)?.response?.data?.detail || (err as any)?.message || 'Registration failed. Please try again.';

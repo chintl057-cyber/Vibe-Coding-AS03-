@@ -9,16 +9,24 @@ import type { Product } from '../types';
 
 export function BasketPage() {
   const navigate = useNavigate();
-  const { basket } = useBasket();
+  const { basket, isLoading: basketLoading } = useBasket();
   const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
+        setProductsLoading(true);
         const data = await productsApi.getAll(0, 1000);
         setProducts(data);
+        setProductsError(null);
       } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load products';
         console.error('Failed to load products:', err);
+        setProductsError(message);
+      } finally {
+        setProductsLoading(false);
       }
     };
 
@@ -38,7 +46,11 @@ export function BasketPage() {
 
       <section className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-100">
         <p className="mb-2 font-semibold text-slate-800">Your items</p>
-        {selected.length === 0 ? (
+        {basketLoading || productsLoading ? (
+          <p className="text-sm text-slate-500">Loading your saved basket...</p>
+        ) : productsError ? (
+          <p className="text-sm text-red-600">{productsError}</p>
+        ) : selected.length === 0 ? (
           <p className="text-sm text-slate-500">No items yet.</p>
         ) : (
           <div className="space-y-2">
@@ -52,9 +64,15 @@ export function BasketPage() {
         )}
       </section>
 
-      {selected.length === 0 ? <EmptyBasketState /> : <BasketSummaryPanel basket={basket} products={products} />}
+      {!basketLoading && !productsLoading && !productsError && (
+        selected.length === 0 ? <EmptyBasketState /> : <BasketSummaryPanel basket={basket} products={products} />
+      )}
 
-      <Button className="w-full" onClick={() => navigate('/recommendation')} disabled={selected.length === 0}>
+      <Button
+        className="w-full"
+        onClick={() => navigate('/recommendation')}
+        disabled={basketLoading || productsLoading || Boolean(productsError) || selected.length === 0}
+      >
         Get recommendation
       </Button>
     </main>
