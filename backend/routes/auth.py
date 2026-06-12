@@ -51,14 +51,27 @@ def _extract_supabase_user_id(data: dict[str, Any]) -> Optional[str]:
 
 
 def _upsert_user(db: Session, user_id: str, email: str, name: Optional[str] = None) -> User:
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (
+    db.query(User)
+    .filter(
+        (User.id == user_id) |
+        (User.email == email)
+    )
+    .first()
+)
 
     if user:
+        user.id = user_id
         user.email = email
+
         if name:
             user.name = name
     else:
-        user = User(id=user_id, email=email, name=name)
+        user = User(
+            id=user_id,
+            email=email,
+            name=name
+        )
         db.add(user)
 
     db.commit()
