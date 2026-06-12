@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     supabase_service_key: str
     database_url: str
     jwt_secret: str
-    cors_origins: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+    cors_origins: List[str] = ["https://basketly-backend.vercel.app", "http://localhost:8000"]
     environment: str = "development"
 
     @field_validator("cors_origins", mode="before")
