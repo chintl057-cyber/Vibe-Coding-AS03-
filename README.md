@@ -139,57 +139,7 @@ The `.gitignore` file excludes:
 * Node modules
 * Build artefacts
 * Log files
-
----
-
-## ⚙️ Local Development Setup
-
-### 1. Clone Repository
-
-```bash
-git clone <repository-url>
-cd basketly
-```
-
-### 2. Backend Setup
-
-```bash
-cd backend
-
-python -m venv .venv
-
-# Windows
-.venv\Scripts\activate
-
-pip install -r requirements.txt
-
-uvicorn main:app --reload
-```
-
-Backend runs on:
-
-```text
-http://localhost:8000
-```
-
----
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-
-npm install
-
-npm run dev
-```
-
-Frontend runs on:
-
-```text
-http://localhost:5173
-```
-
+  
 ---
 
 ## ☁️ Deployment
@@ -217,10 +167,3 @@ This project follows a modern version control workflow:
 5. Production testing and validation
 
 ---
-
-
-
-
-
-
-La Trobe University
