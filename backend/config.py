@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     supabase_service_key: str
     database_url: str
     jwt_secret: str
-    cors_origins: List[str] = ["*"]
+    cors_origins: List[str] = ["https://basketly-only.vercel.app"]
     environment: str = "development"
 
     @field_validator("cors_origins", mode="before")
