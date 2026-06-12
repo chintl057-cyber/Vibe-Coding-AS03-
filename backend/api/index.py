@@ -1,5 +1,3 @@
-"""Vercel serverless entrypoint for the FastAPI backend."""
-
 from pathlib import Path
 import sys
 
