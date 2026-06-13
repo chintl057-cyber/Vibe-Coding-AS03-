@@ -142,32 +142,6 @@ The `.gitignore` file excludes:
 
 ---
 
-## ☁️ Deployment
-
-The application is deployed using:
-
-* GitHub Repository
-* Vercel Cloud Hosting
-* Supabase Database Services
-
-### Live Application
-
-https://basketly-lovat.vercel.app
-
----
-
-## 📈 Development Workflow
-
-This project follows a modern version control workflow:
-
-1. Develop features locally
-2. Commit changes using Git
-3. Push changes to GitHub
-4. Automatic deployment via Vercel
-5. Production testing and validation
-
----
-
 ## ⚙️ Local Development Setup
 
 ### 1. Clone Repository
@@ -243,6 +217,10 @@ This project follows a modern version control workflow:
 5. Production testing and validation
 
 ---
+
+
+
+
 
 
 La Trobe University
