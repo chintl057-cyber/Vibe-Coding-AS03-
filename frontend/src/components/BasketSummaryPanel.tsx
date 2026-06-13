@@ -3,16 +3,17 @@ import { BasketItem, Product } from '../types';
 import { formatCurrency, getBasketRecommendationAnalysis, getBasketTotalsByStore } from '../utils/basket';
 import { ComparisonBars } from './ComparisonBars';
 import { OptimisationMode, OptimisationModeSwitcher } from './OptimisationModeSwitcher';
-import { RecommendationExplanation } from './RecommendationExplanation';
+import { ProductRecommendationDetail, RecommendationExplanation } from './RecommendationExplanation';
 import { SplitBasketAllocationPanel } from './SplitBasketAllocation';
 
 interface Props {
   basket: BasketItem[];
   products: Product[];
+  mode: OptimisationMode;
+  onModeChange: (mode: OptimisationMode) => void;
 }
 
-export function BasketSummaryPanel({ basket, products }: Props) {
-  const [mode, setMode] = useState<OptimisationMode>('single-store');
+export function BasketSummaryPanel({ basket, products, mode, onModeChange }: Props) {
   const [isSwitching, setIsSwitching] = useState(false);
 
   const totals = getBasketTotalsByStore(basket, products);
@@ -25,11 +26,45 @@ export function BasketSummaryPanel({ basket, products }: Props) {
   }, [mode]);
 
   const isSplitEqualToSingle = analysis.splitBasketExtraSavings <= 0.001;
+  const recommendationProducts = useMemo<ProductRecommendationDetail[]>(() => {
+    return basket
+      .map((item) => {
+        const product = products.find((candidate) => candidate.id === item.productId);
+        if (!product) return undefined;
+
+        if (mode === 'single-store') {
+          const totalCost = product.prices[analysis.cheapestStoreTotal.store] * item.quantity;
+          const comparisonCost = product.prices[analysis.secondCheapestStoreTotal.store] * item.quantity;
+
+          return {
+            productId: product.id,
+            productName: product.name,
+            category: product.category,
+            totalCost,
+            totalSavings: comparisonCost - totalCost,
+          };
+        }
+
+        const allocation = analysis.splitBasket.allocations.find((candidate) => candidate.productId === product.id);
+        if (!allocation) return undefined;
+
+        const singleStoreCost = product.prices[analysis.cheapestStoreTotal.store] * item.quantity;
+        return {
+          productId: product.id,
+          productName: product.name,
+          category: product.category,
+          totalCost: allocation.lineTotal,
+          totalSavings: singleStoreCost - allocation.lineTotal,
+        };
+      })
+      .filter((product): product is ProductRecommendationDetail => Boolean(product))
+      .sort((a, b) => b.totalSavings - a.totalSavings);
+  }, [analysis, basket, mode, products]);
 
   return (
     <section className="space-y-3 soft-enter">
       <div className="rounded-3xl bg-gradient-to-br from-white to-emerald-50 p-4 shadow-soft ring-1 ring-emerald-100">
-        <OptimisationModeSwitcher mode={mode} onChange={setMode} />
+        <OptimisationModeSwitcher mode={mode} onChange={onModeChange} />
         <p className="mt-3 text-sm text-slate-500">Recommended mode</p>
         {mode === 'single-store' ? (
           <>
@@ -66,30 +101,32 @@ export function BasketSummaryPanel({ basket, products }: Props) {
         <p className="mt-1 text-xs text-slate-500">{analysis.confidenceReason}</p>
       </div>
 
-      <div className="rounded-3xl bg-white p-4 shadow-soft ring-1 ring-slate-100">
-        <p className="mb-2 font-semibold text-slate-800">Basket totals by supermarket</p>
+      {mode === 'single-store' ? (
+        <div className="rounded-3xl bg-white p-4 shadow-soft ring-1 ring-slate-100">
+          <p className="mb-2 font-semibold text-slate-800">Basket totals by supermarket</p>
 
-        {isSwitching ? (
-          <div className="space-y-2 animate-pulse">
-            <div className="h-11 rounded-xl bg-slate-100" />
-            <div className="h-11 rounded-xl bg-slate-100" />
-            <div className="h-11 rounded-xl bg-slate-100" />
-          </div>
-        ) : (
-          <ComparisonBars totals={totals} highlightedStore={analysis.cheapestStoreTotal.store} />
-        )}
-      </div>
-
-      <RecommendationExplanation
-        topItems={analysis.topSavingItems}
-        categorySavings={analysis.categorySavings}
-        secondCheapestStore={analysis.secondCheapestStoreTotal.store}
-        savingsVsSecond={analysis.singleStoreSavingsVsSecond}
-      />
-
-      {mode === 'max-savings' && !isSplitEqualToSingle && (
+          {isSwitching ? (
+            <div className="space-y-2 animate-pulse">
+              <div className="h-11 rounded-xl bg-slate-100" />
+              <div className="h-11 rounded-xl bg-slate-100" />
+              <div className="h-11 rounded-xl bg-slate-100" />
+            </div>
+          ) : (
+            <ComparisonBars totals={totals} highlightedStore={analysis.cheapestStoreTotal.store} />
+          )}
+        </div>
+      ) : (
         <SplitBasketAllocationPanel allocations={analysis.splitBasket.allocations} />
       )}
+
+      <RecommendationExplanation
+        products={recommendationProducts}
+        comparisonLabel={mode === 'single-store' ? 'Compared to second cheapest' : 'Compared to cheapest single-store'}
+        comparisonStore={mode === 'single-store' ? analysis.secondCheapestStoreTotal.store : analysis.cheapestStoreTotal.store}
+        totalSavings={
+          mode === 'single-store' ? analysis.singleStoreSavingsVsSecond : analysis.splitBasketExtraSavings
+        }
+      />
 
       <div className="rounded-3xl bg-gradient-to-r from-emerald-50 to-teal-50 p-4 text-sm text-emerald-800 ring-1 ring-emerald-100">
         <p className="font-semibold">Weekly insights</p>

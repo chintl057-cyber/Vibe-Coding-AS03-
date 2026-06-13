@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { BasketSummaryPanel } from '../components/BasketSummaryPanel';
 import { EmptyBasketState } from '../components/EmptyBasketState';
+import type { OptimisationMode } from '../components/OptimisationModeSwitcher';
 import { Button } from '../components/ui/Button';
 import { useBasket } from '../contexts/BasketContext';
 import { productsApi } from '../api/products';
@@ -13,6 +14,7 @@ export function BasketPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState<string | null>(null);
+  const [mode, setMode] = useState<OptimisationMode>('single-store');
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -65,12 +67,16 @@ export function BasketPage() {
       </section>
 
       {!basketLoading && !productsLoading && !productsError && (
-        selected.length === 0 ? <EmptyBasketState /> : <BasketSummaryPanel basket={basket} products={products} />
+        selected.length === 0 ? (
+          <EmptyBasketState />
+        ) : (
+          <BasketSummaryPanel basket={basket} products={products} mode={mode} onModeChange={setMode} />
+        )
       )}
 
       <Button
         className="w-full"
-        onClick={() => navigate('/recommendation')}
+        onClick={() => navigate(`/recommendation?mode=${mode}`)}
         disabled={basketLoading || productsLoading || Boolean(productsError) || selected.length === 0}
       >
         Get recommendation

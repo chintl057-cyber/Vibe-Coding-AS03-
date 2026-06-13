@@ -84,7 +84,7 @@ class RecommendationService:
             
             prices = {}
             for pp, name in prices_data:
-                prices[name] = pp.ProductPrice.price
+                prices[name] = pp.price
             
             products_map[product.id] = {
                 "id": product.id,
