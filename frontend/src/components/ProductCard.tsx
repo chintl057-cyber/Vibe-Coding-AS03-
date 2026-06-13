@@ -44,7 +44,7 @@ export function ProductCard({ product, expanded, onToggleCompare, quantity, onIn
               {promo.promotionLabel} at {promo.store} • Save {formatCurrency(getPromotionSaving(product))}
             </p>
           )}
-          <p className="text-xs text-slate-400">Verified {product.updatedAt.replace('updated ', '')}</p>
+          <p className="text-xs text-slate-400">Updated at {product.updatedAt.replace('updated ', '')}</p>
         </div>
       </div>
 

@@ -7,6 +7,8 @@ import { useBasket } from '../contexts/BasketContext';
 import { useDiscovery } from '../contexts/DiscoveryContext';
 import { suburbs } from '../data/products';
 
+const ITEMS_PER_PAGE = 8;
+
 export function DiscoveryPage() {
   const navigate = useNavigate();
   const { basket, addToBasket, decreaseBasketQuantity, getProductQuantity } = useBasket();
@@ -28,12 +30,14 @@ export function DiscoveryPage() {
   } = useDiscovery();
   const orderedCategories = ['dairy', 'fruit', 'vegetables', 'pantry', 'snacks', 'drinks'] as const;
 
-  const [itemsPerPage, setItemsPerPage] = useState(9);
   const [page, setPage] = useState(1);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
-  const visibleProducts = filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const visibleProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
 
   useEffect(() => {
     if (page > totalPages) {
@@ -168,30 +172,10 @@ export function DiscoveryPage() {
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-4">
                 <p className="text-sm text-slate-600">
                   Showing <span className="font-semibold text-slate-900">{filteredProducts.length}</span> products
                 </p>
-                <div className="flex items-center gap-3">
-                  <label htmlFor="itemsPerPage" className="text-sm font-medium text-slate-900">
-                    Items per page
-                  </label>
-                  <select
-                    id="itemsPerPage"
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setPage(1);
-                    }}
-                    className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition hover:border-brand-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-                  >
-                    {[6, 9, 12, 15].map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
             </div>
 
@@ -207,19 +191,61 @@ export function DiscoveryPage() {
                 <p className="mt-1 text-sm text-red-700">{error}</p>
               </div>
             ) : filteredProducts.length > 0 ? (
-              <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-2 pb-28">
-                {visibleProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    expanded={expandedId === product.id}
-                    onToggleCompare={() => setExpandedId(expandedId === product.id ? undefined : product.id)}
-                    quantity={getProductQuantity(product.id)}
-                    onIncrease={() => addToBasket(product.id)}
-                    onDecrease={() => decreaseBasketQuantity(product.id)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-2">
+                  {visibleProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      expanded={expandedId === product.id}
+                      onToggleCompare={() => setExpandedId(expandedId === product.id ? undefined : product.id)}
+                      quantity={getProductQuantity(product.id)}
+                      onIncrease={() => addToBasket(product.id)}
+                      onDecrease={() => decreaseBasketQuantity(product.id)}
+                    />
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <nav
+                    className="mt-8 flex items-center gap-2 overflow-x-auto rounded-2xl border border-brand-100 bg-white p-3 shadow-sm"
+                    aria-label="Product pages"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setPage((previousPage) => Math.max(1, previousPage - 1))}
+                      disabled={currentPage === 1}
+                      className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-brand-50 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Previous
+                    </button>
+                    {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+                      <button
+                        key={pageNumber}
+                        type="button"
+                        onClick={() => setPage(pageNumber)}
+                        aria-current={pageNumber === currentPage ? 'page' : undefined}
+                        className={`h-9 min-w-9 shrink-0 rounded-lg px-2 text-sm font-semibold transition ${
+                          pageNumber === currentPage
+                            ? 'bg-brand-600 text-white'
+                            : 'text-slate-700 hover:bg-brand-50 hover:text-brand-700'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setPage((previousPage) => Math.min(totalPages, previousPage + 1))}
+                      disabled={currentPage === totalPages}
+                      className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-brand-50 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Next
+                    </button>
+                  </nav>
+                )}
+                <div className="h-28" />
+              </>
             ) : (
               <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-16 text-center">
                 <p className="text-lg font-semibold text-slate-900">No products found</p>
