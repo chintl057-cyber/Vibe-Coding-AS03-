@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthAlert, AuthFooterAction, AuthInput, AuthLayout } from '../components/auth/AuthLayout';
 import { Button } from '../components/ui/Button';
 import { authApi } from '../api/auth';
+import { getApiErrorMessage } from '../api/errors';
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -31,8 +32,7 @@ export function RegisterPage() {
       authApi.storeToken(response.accessToken, response.userId);
       navigate('/discovery');
     } catch (err) {
-      const errorMessage = (err as any)?.response?.data?.detail || (err as any)?.message || 'Registration failed. Please try again.';
-      setError(errorMessage);
+      setError(getApiErrorMessage(err, 'We could not create your account. Please try again.'));
     } finally {
       setIsLoading(false);
     }

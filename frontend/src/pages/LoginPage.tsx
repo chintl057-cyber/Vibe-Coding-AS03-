@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthAlert, AuthFooterAction, AuthInput, AuthLayout } from '../components/auth/AuthLayout';
 import { Button } from '../components/ui/Button';
 import { authApi } from '../api/auth';
+import { getApiErrorMessage } from '../api/errors';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -27,8 +28,7 @@ export function LoginPage() {
       authApi.storeToken(response.accessToken, response.userId);
       navigate('/discovery');
     } catch (err) {
-      const errorMessage = (err as any)?.response?.data?.detail || (err as any)?.message || 'Login failed. Please try again.';
-      setError(errorMessage);
+      setError(getApiErrorMessage(err, 'We could not log you in. Please try again.'));
     } finally {
       setIsLoading(false);
     }

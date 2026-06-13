@@ -13,7 +13,7 @@ async def get_current_user(credentials = Depends(security)) -> dict:
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
+            detail="Your session has expired. Please log in again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
@@ -21,7 +21,7 @@ async def get_current_user(credentials = Depends(security)) -> dict:
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
+            detail="Your session is invalid. Please log in again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

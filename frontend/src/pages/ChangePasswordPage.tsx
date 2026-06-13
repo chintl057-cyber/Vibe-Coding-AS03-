@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthAlert, AuthFooterAction, AuthInput, AuthLayout } from '../components/auth/AuthLayout';
 import { Button } from '../components/ui/Button';
 import { authApi } from '../api/auth';
+import { getApiErrorMessage } from '../api/errors';
 
 export function ChangePasswordPage() {
   const navigate = useNavigate();
@@ -29,8 +30,7 @@ export function ChangePasswordPage() {
       await authApi.changePassword(email, newPassword);
       navigate('/login', { state: { message: 'Password updated successfully. Please log in.' } });
     } catch (err) {
-      const errorMessage = (err as any)?.response?.data?.detail || (err as any)?.message || 'Password change failed. Please try again.';
-      setError(errorMessage);
+      setError(getApiErrorMessage(err, 'We could not update your password. Please try again.'));
     } finally {
       setIsLoading(false);
     }

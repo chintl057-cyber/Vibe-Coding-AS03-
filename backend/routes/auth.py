@@ -12,6 +12,7 @@ import logging
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
+REQUEST_TIMEOUT_SECONDS = 10
 
 
 class LoginRequest(BaseModel):
@@ -101,23 +102,31 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
                 "apikey": settings.supabase_key,
                 "Content-Type": "application/json",
             },
+            timeout=REQUEST_TIMEOUT_SECONDS,
         )
 
         logger.info("Supabase register status: %s", response.status_code)
 
         if response.status_code not in (200, 201):
-            try:
-                error_detail = response.json()
-            except Exception:
-                error_detail = response.text
-            raise HTTPException(status_code=400, detail=f"Supabase error: {error_detail}")
+            if response.status_code == 429:
+                raise HTTPException(
+                    status_code=429,
+                    detail="Too many account requests. Please wait a moment and try again.",
+                )
+            raise HTTPException(
+                status_code=400,
+                detail="We could not create this account. The email may already be registered or the password may not meet the requirements.",
+            )
 
         data = response.json()
         user = _extract_supabase_user(data)
         user_id = _extract_supabase_user_id(data)
 
         if not user_id:
-            raise HTTPException(status_code=500, detail="Supabase did not return user id")
+            raise HTTPException(
+                status_code=500,
+                detail="We could not finish creating your account. Please try again.",
+            )
 
         email = user.get("email") or request.email
         _upsert_user(db, user_id=user_id, email=email, name=request.name)
@@ -136,7 +145,10 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
     except Exception as e:
         error_msg = str(e) if str(e) else type(e).__name__
         logger.exception("Registration error: %s", error_msg)
-        raise HTTPException(status_code=500, detail=f"Registration failed: {error_msg}")
+        raise HTTPException(
+            status_code=500,
+            detail="We could not create your account. Please try again later.",
+        )
 
 
 @router.post("/login", response_model=AuthResponse)
@@ -152,19 +164,26 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
             url,
             json={"email": request.email, "password": request.password},
             headers={"apikey": settings.supabase_key},
+            timeout=REQUEST_TIMEOUT_SECONDS,
         )
 
         logger.info("Supabase login status: %s", response.status_code)
 
         if response.status_code != 200:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+            raise HTTPException(
+                status_code=401,
+                detail="The email or password you entered is incorrect.",
+            )
 
         data = response.json()
         user = _extract_supabase_user(data)
         user_id = _extract_supabase_user_id(data)
 
         if not user_id:
-            raise HTTPException(status_code=500, detail="Supabase did not return user id")
+            raise HTTPException(
+                status_code=500,
+                detail="We could not complete your login. Please try again.",
+            )
 
         email = user.get("email") or request.email
         name = user.get("user_metadata", {}).get("name") if isinstance(user.get("user_metadata"), dict) else None
@@ -184,7 +203,10 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     except Exception as e:
         error_msg = str(e) if str(e) else type(e).__name__
         logger.exception("Login error: %s", error_msg)
-        raise HTTPException(status_code=500, detail=f"Login failed: {error_msg}")
+        raise HTTPException(
+            status_code=500,
+            detail="We could not log you in. Please try again later.",
+        )
 
 
 @router.get("/me")
@@ -211,12 +233,16 @@ def change_password(request: ChangePasswordRequest):
                 "apikey": settings.supabase_key,
                 "Authorization": f"Bearer {request.email}",
             },
+            timeout=REQUEST_TIMEOUT_SECONDS,
         )
 
         logger.info("Supabase change password status: %s", response.status_code)
 
         if response.status_code not in [200, 204]:
-            raise HTTPException(status_code=400, detail="Failed to change password")
+            raise HTTPException(
+                status_code=400,
+                detail="We could not update the password. Check your account details and try again.",
+            )
 
         return {"message": "Password changed successfully"}
     except HTTPException:
@@ -224,4 +250,7 @@ def change_password(request: ChangePasswordRequest):
     except Exception as e:
         error_msg = str(e) if str(e) else type(e).__name__
         logger.exception("Change password error: %s", error_msg)
-        raise HTTPException(status_code=500, detail=f"Change password failed: {error_msg}")
+        raise HTTPException(
+            status_code=500,
+            detail="We could not update your password. Please try again later.",
+        )

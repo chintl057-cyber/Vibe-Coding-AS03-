@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 
 class BasketItemSchema(BaseModel):
     product_id: str
-    quantity: int
+    quantity: int = Field(gt=0)
     
     class Config:
         from_attributes = True

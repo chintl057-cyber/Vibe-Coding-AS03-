@@ -1,8 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from config import settings
 from database import Base, engine
 from routes import products, basket, auth
+from errors import register_exception_handlers
 
 if settings.environment == "development":
     # Create local development tables automatically. Production deployments should
@@ -14,6 +16,7 @@ app = FastAPI(
     description="Production-ready backend for grocery price comparison",
     version="1.0.0",
 )
+register_exception_handlers(app)
 
 # Configure CORS
 app.add_middleware(
@@ -45,6 +48,17 @@ def root():
         "docs": "/docs",
         "health": "/health",
     }
+
+@app.api_route(
+    "/api/{path:path}",
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+def unknown_api_route(request: Request, path: str):
+    return JSONResponse(
+        status_code=404,
+        content={"detail": f"The API endpoint '{request.url.path}' does not exist."},
+    )
 
 if __name__ == "__main__":
     import uvicorn

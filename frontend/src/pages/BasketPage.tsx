@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import { useBasket } from '../contexts/BasketContext';
 import { productsApi } from '../api/products';
 import type { Product } from '../types';
+import { getApiErrorMessage } from '../api/errors';
 
 export function BasketPage() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export function BasketPage() {
         setProducts(data);
         setProductsError(null);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load products';
+        const message = getApiErrorMessage(err, 'We could not load your basket products. Please try again.');
         console.error('Failed to load products:', err);
         setProductsError(message);
       } finally {

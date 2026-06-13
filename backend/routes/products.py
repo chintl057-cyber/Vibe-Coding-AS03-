@@ -4,8 +4,10 @@ from database import get_db
 from services.product_service import ProductService
 from schemas.product import ProductResponseSchema
 from typing import List
+import logging
 
 router = APIRouter(prefix="/api/products", tags=["products"])
+logger = logging.getLogger(__name__)
 
 @router.get("/", response_model=List[ProductResponseSchema])
 def get_products(
@@ -19,7 +21,11 @@ def get_products(
         print(f"❌ Products error: {str(e)}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        logger.exception("Failed to load products")
+        raise HTTPException(
+            status_code=500,
+            detail="We could not load products. Please try again later.",
+        )
 
 @router.get("/search", response_model=List[ProductResponseSchema])
 def search_products(
@@ -35,11 +41,15 @@ def search_products(
         print(f"❌ Search error: {str(e)}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        logger.exception("Failed to search products")
+        raise HTTPException(
+            status_code=500,
+            detail="We could not search products. Please try again later.",
+        )
 
 @router.get("/{product_id}", response_model=ProductResponseSchema)
 def get_product(product_id: str, db: Session = Depends(get_db)):
     product = ProductService.get_product_by_id(db, product_id)
     if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
+        raise HTTPException(status_code=404, detail="We could not find that product.")
     return product

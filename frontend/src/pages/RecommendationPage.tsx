@@ -10,6 +10,7 @@ import { useDiscovery } from '../contexts/DiscoveryContext';
 import { suburbs } from '../data/products';
 import type { BasketRecommendationAnalysis, Category, Product, Supermarket } from '../types';
 import { formatCurrency } from '../utils/basket';
+import { getApiErrorMessage } from '../api/errors';
 
 interface ShoppingItem {
   productId: string;
@@ -66,7 +67,7 @@ export function RecommendationPage() {
         setProducts(productData);
         setError(null);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to analyze basket';
+        const message = getApiErrorMessage(err, 'We could not analyze your basket. Please try again.');
         console.error('Failed to analyze basket:', err);
         setError(message);
       } finally {

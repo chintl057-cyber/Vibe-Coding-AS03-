@@ -3,6 +3,7 @@ import { Category } from '../types';
 import { getCheapestStoreForProduct, getPromotionSaving } from '../utils/basket';
 import { productsApi } from '../api/products';
 import type { Product } from '../types';
+import { getApiErrorMessage } from '../api/errors';
 
 type SortOption = 'name' | 'discount' | 'price';
 type ProductFilter = Category | 'all' | 'half-price';
@@ -49,7 +50,7 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
         setProducts(data || []);
         setError(null);
       } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch products';
+        const errorMsg = getApiErrorMessage(err, 'We could not load products. Please try again.');
         console.error('Error fetching products:', err);
         console.error('Error details:', errorMsg);
         setError(errorMsg);

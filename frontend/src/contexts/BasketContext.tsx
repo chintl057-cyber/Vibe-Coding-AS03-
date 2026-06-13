@@ -2,6 +2,7 @@ import { createContext, useContext, useState, ReactNode, useEffect, useCallback 
 import { BasketItem } from '../types';
 import { basketApi } from '../api/basket';
 import { authApi } from '../api/auth';
+import { getApiErrorMessage } from '../api/errors';
 
 interface BasketContextType {
   basket: BasketItem[];
@@ -12,6 +13,7 @@ interface BasketContextType {
   saveBasket: () => Promise<void>;
   loadBasket: () => Promise<void>;
   isLoading: boolean;
+  syncError: string | null;
 }
 
 const BasketContext = createContext<BasketContextType | undefined>(undefined);
@@ -20,6 +22,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
   const [basket, setBasket] = useState<BasketItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   // Load basket from backend on mount if user is logged in
   useEffect(() => {
@@ -30,8 +33,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
           setIsLoading(true);
           await loadBasket();
         } catch (err) {
-          // If no basket found, it's fine - user starts with empty basket
-          console.debug('No basket found for user, starting fresh');
+          setSyncError(getApiErrorMessage(err, 'We could not load your saved basket.'));
         } finally {
           setIsLoading(false);
         }
@@ -47,6 +49,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
       if (response.items) {
         setBasket(response.items);
       }
+      setSyncError(null);
     } catch (err) {
       if ((err as any)?.response?.status === 404) {
         setBasket([]);
@@ -54,6 +57,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
       }
 
       console.error('Failed to load basket:', err);
+      setSyncError(getApiErrorMessage(err, 'We could not load your saved basket.'));
       throw err;
     }
   }, []);
@@ -64,8 +68,10 @@ export function BasketProvider({ children }: { children: ReactNode }) {
     try {
       setIsSyncing(true);
       await basketApi.save(basket);
+      setSyncError(null);
     } catch (err) {
       console.error('Failed to save basket:', err);
+      setSyncError(getApiErrorMessage(err, 'Your basket could not be saved. Please try again.'));
       throw err;
     } finally {
       setIsSyncing(false);
@@ -126,6 +132,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
       saveBasket,
       loadBasket,
       isLoading: isLoading || isSyncing,
+      syncError,
     }}>
       {children}
     </BasketContext.Provider>

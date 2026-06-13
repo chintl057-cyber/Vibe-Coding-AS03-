@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getApiErrorMessage } from './errors';
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000' : '');
 
@@ -46,12 +47,17 @@ client.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
-      // Clear auth and redirect to login
+    const requestUrl = error.config?.url ?? '';
+    const isAuthRequest = requestUrl.startsWith('/api/auth/login') || requestUrl.startsWith('/api/auth/register');
+    const hadAccessToken = Boolean(localStorage.getItem('access_token'));
+
+    if (error.response?.status === 401 && hadAccessToken && !isAuthRequest) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('user_id');
-      window.location.href = '/login';
+      window.location.assign('/login');
     }
+
+    error.message = getApiErrorMessage(error);
     const isEmptySavedBasket =
       error.response?.status === 404 && error.config?.url?.startsWith('/api/basket');
 

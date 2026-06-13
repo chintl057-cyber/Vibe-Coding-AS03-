@@ -5,8 +5,10 @@ from dependencies.auth import get_current_user
 from services.basket_service import BasketService
 from services.recommendation_service import RecommendationService
 from schemas.basket import BasketRequestSchema, BasketAnalysisResponseSchema
+import logging
 
 router = APIRouter(prefix="/api/basket", tags=["basket"])
+logger = logging.getLogger(__name__)
 
 @router.post("/analyze", response_model=BasketAnalysisResponseSchema)
 def analyze_basket(
@@ -18,7 +20,11 @@ def analyze_basket(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to analyze basket")
+        raise HTTPException(
+            status_code=500,
+            detail="We could not analyze your basket. Please try again later.",
+        )
 
 @router.get("/")
 def get_user_basket(
@@ -28,7 +34,10 @@ def get_user_basket(
     user_id = current_user["user_id"]
     basket = BasketService.get_user_basket(db, user_id)
     if not basket:
-        raise HTTPException(status_code=404, detail="Basket not found")
+        raise HTTPException(
+            status_code=404,
+            detail="You do not have a saved basket yet.",
+        )
     
     items = [{"product_id": item.product_id, "quantity": item.quantity} for item in basket.items]
     return {"basket_id": basket.id, "items": items, "name": basket.name}

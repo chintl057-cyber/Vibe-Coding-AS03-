@@ -7,6 +7,7 @@ import { DiscoveryPage } from './pages/DiscoveryPage';
 import { BasketPage } from './pages/BasketPage';
 import { RecommendationPage } from './pages/RecommendationPage';
 import { AppShell } from './components/layout/AppShell';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/basket" element={<BasketPage />} />
         <Route path="/recommendation" element={<RecommendationPage />} />
       </Route>
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
